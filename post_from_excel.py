@@ -1,20 +1,22 @@
-import os, io, json, time, re, requests
+import os, json, time, re
 import pandas as pd
 from atproto import Client
 
-# ====== ENV VARS (NAMES, not values) ======
-EXCEL_DOWNLOAD_URL = os.environ["EXCEL_DOWNLOAD_URL"]   # set in GitHub (Secret or Variable)
-BSKY_HANDLE        = os.environ["BSKY_HANDLE"]          # e.g. testpage.bsky.social
-BSKY_APP_PWD       = os.environ["BSKY_APP_PWD"]         # Bluesky App Password
+# ====== ENV VARS ======
+BSKY_HANDLE  = os.environ["BSKY_HANDLE"]   # e.g. testpage.bsky.social
+BSKY_APP_PWD = os.environ["BSKY_APP_PWD"]  # Bluesky App Password
+
+# Excel location (defaults to repo's data/survey.xlsx)
+EXCEL_PATH   = os.getenv("EXCEL_PATH", "data/survey.xlsx")
 
 # Optional overrides via repo Variables/Secrets
 TIMESTAMP_COL = os.getenv("TIMESTAMP_COL", "Timestamp")
 NAME_COL      = os.getenv("NAME_COL", "Name")
-# If MESSAGE_COL matches a column, we’ll use it; otherwise we auto-detect the ETHOS “what went well” column.
 MESSAGE_COL   = os.getenv("MESSAGE_COL", "Message")
-SHEET_NAME    = os.getenv("SHEET_NAME", None)  # e.g., "Form responses 1" (None => first sheet)
+SHEET_NAME    = os.getenv("SHEET_NAME", None)  # e.g., "Form responses 1" (None = first sheet)
 
 STATE_FILE = "last_row.json"  # remembers the last posted row index
+
 
 # ---------- Helpers ----------
 def load_state():
@@ -23,18 +25,20 @@ def load_state():
             return json.load(f)
     return {"last_index": -1}
 
+
 def save_state(s):
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(s, f)
 
+
 def fetch_dataframe() -> pd.DataFrame:
-    r = requests.get(EXCEL_DOWNLOAD_URL, timeout=60)
-    r.raise_for_status()
-    df = pd.read_excel(io.BytesIO(r.content), sheet_name=SHEET_NAME, header=0)
+    df = pd.read_excel(EXCEL_PATH, sheet_name=SHEET_NAME or 0, header=0)
     return df.fillna("")
+
 
 def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", str(s).strip().lower())
+
 
 def find_review_column(df: pd.DataFrame) -> str:
     """
@@ -71,6 +75,7 @@ def find_review_column(df: pd.DataFrame) -> str:
     print(f"[warn] Falling back to textiest column: {textiest}")
     return textiest
 
+
 def format_post(row: dict, review_col: str) -> str:
     review = str(row.get(review_col, "")).strip()
     if not review:
@@ -85,6 +90,7 @@ def format_post(row: dict, review_col: str) -> str:
     if ts:
         base += f" • {ts}"
     return base[:290]  # ~300 char safety
+
 
 # ---------- Main ----------
 def main():
@@ -116,6 +122,7 @@ def main():
         state["last_index"] = idx
         save_state(state)
 
+
 if __name__ == "__main__":
     main()
-
+7
