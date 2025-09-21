@@ -2,30 +2,48 @@ name: Post MS Forms rows to Bluesky
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes (runs in UTC)
-  workflow_dispatch: {}       # lets you run it manually
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
 
 jobs:
   run:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # needed to commit last_row.json state
+      contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install atproto pandas openpyxl
-      - env:
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install atproto pandas openpyxl
+
+      - name: Sanity check files
+        run: |
+          pwd
+          ls -la
+          ls -la data || true
+
+      - name: Run poster (with explicit Excel path + debug)
+        env:
           BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
           BSKY_APP_PWD: ${{ secrets.BSKY_APP_PWD }}
-          # Optional overrides if your column names/sheet differ:
-          # TIMESTAMP_COL: "Submitted At"
-          # NAME_COL: "Full Name"
+          # --- set this to your exact filename in repo ---
+          EXCEL_PATH: "data/survey.xlsx"
+          # --- optional: force exact column header if auto-detect misses ---
           # MESSAGE_COL: "What did ETHOS do well?"
+          # TIMESTAMP_COL: "Timestamp"
+          # NAME_COL: "Name"
           # SHEET_NAME: "Form responses 1"
-          # EXCEL_PATH: "data/survey.xlsx"
+          # --- debug toggles (TEMPORARY) ---
+          RESET_STATE: "true"            # reset last_row.json this run
+          FORCE_POST_FIRST_N: "1"        # force posting first row
         run: python post_from_excel.py
+
       - name: Commit state
         run: |
           git config user.name "github-actions"
