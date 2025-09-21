@@ -1,0 +1,35 @@
+name: Post MS Forms rows to Bluesky
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # every 10 minutes (runs in UTC)
+  workflow_dispatch: {}       # lets you run it manually
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to commit last_row.json state
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install atproto requests pandas openpyxl
+      - env:
+          EXCEL_DOWNLOAD_URL: ${{ secrets.EXCEL_DOWNLOAD_URL }}
+          BSKY_HANDLE:        ${{ secrets.BSKY_HANDLE }}
+          BSKY_APP_PWD:       ${{ secrets.BSKY_APP_PWD }}
+          # Optional overrides if your column names/sheet differ:
+          # TIMESTAMP_COL: "Submitted At"
+          # NAME_COL: "Full Name"
+          # MESSAGE_COL: "Response"
+          # SHEET_NAME: "Form responses 1"
+        run: python post_from_excel.py
+      - name: Commit state
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add last_row.json || true
+          git commit -m "Update state" || true
+          git push
