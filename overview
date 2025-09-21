@@ -1,7 +1,0 @@
-post_from_excel.py - This python script first points to the secrets and variables that are needed fpr the data to be retreived and to know where to post. The JSON file ensures that the correct data will be posted with no faults such as duplicates. Then                            using panda, the spreadsheet could be downloaded and have its contents read and retrieved. It will then check the column containing the data that I wanted to post, and then formatted with character limits and posting settings.
-
-
-
-                      
-                     
-                      
