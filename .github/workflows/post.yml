@@ -15,16 +15,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install atproto requests pandas openpyxl
+      - run: pip install atproto pandas openpyxl
       - env:
-          EXCEL_DOWNLOAD_URL: ${{ secrets.EXCEL_DOWNLOAD_URL }}
-          BSKY_HANDLE:        ${{ secrets.BSKY_HANDLE }}
-          BSKY_APP_PWD:       ${{ secrets.BSKY_APP_PWD }}
+          BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
+          BSKY_APP_PWD: ${{ secrets.BSKY_APP_PWD }}
           # Optional overrides if your column names/sheet differ:
           # TIMESTAMP_COL: "Submitted At"
           # NAME_COL: "Full Name"
-          # MESSAGE_COL: "Response"
+          # MESSAGE_COL: "What did ETHOS do well?"
           # SHEET_NAME: "Form responses 1"
+          # EXCEL_PATH: "data/survey.xlsx"
         run: python post_from_excel.py
       - name: Commit state
         run: |
